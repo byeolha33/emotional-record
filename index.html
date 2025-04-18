@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>감정 일기장</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background: url('https://www.transparenttextures.com/patterns/paper-fibers.png');
+      background-color: #faf3e0;
+      color: #4b3d2a;
+      overflow-x: hidden;
+    }
+
+    .main-content {
+      padding: 80px 20px;
+      max-width: 800px;
+      margin: 0 auto;
+      text-align: center;
+      background-color: #fffef7dd;
+      border: 2px dashed #d7c4aa;
+      border-radius: 16px;
+      box-shadow: 0 6px 12px rgba(0,0,0,0.05);
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 30px;
+      color: #5b4331;
+    }
+
+    select, textarea, button {
+      font-size: 1.1rem;
+      padding: 10px 16px;
+      border-radius: 10px;
+      border: 2px solid #d6c1a5;
+      background-color: #fffaf3;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+      transition: all 0.3s ease;
+    }
+
+    select:hover, textarea:focus, button:hover {
+      background-color: #fff0dd;
+    }
+
+    textarea {
+      width: 90%;
+      height: 120px;
+      margin-top: 20px;
+      resize: none;
+      line-height: 1.6;
+    }
+
+    button {
+      margin: 12px 6px;
+      background-color: #ffe0b2;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #ffcc99;
+    }
+
+    #records {
+      margin-top: 40px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 14px;
+    }
+
+    .record-item {
+      padding: 16px;
+      background-color: #fffdf7;
+      border: 2px dashed #e1cbb4;
+      border-radius: 10px;
+      max-width: 320px;
+      white-space: pre-line;
+      box-shadow: 2px 4px 8px rgba(0,0,0,0.08);
+      font-size: 1rem;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 🎵 배경음악 -->
+  <audio id="bgm-player" autoplay loop>
+    <source src="music/듀듀.mp3" type="audio/mp3">
+  </audio>
+
+  <div class="main-content">
+    <h1>오늘의 감정 일기</h1>
+    <select id="emotion-select">
+      <option value="">감정을 선택하세요</option>
+      <option value="happy">😊 기쁨</option>
+      <option value="sad">😢 슬픔</option>
+      <option value="tired">🥱 피곤</option>
+      <option value="anxious">😰 불안</option>
+      <option value="angry">😡 화남</option>
+      <option value="other">✏️ 기타</option>
+    </select>
+
+    <br>
+    <textarea id="emotion-text" placeholder="오늘 느낀 감정을 적어보세요..."></textarea>
+    <br>
+    <button onclick="saveEmotion()">기록하기</button>
+    <button onclick="clearRecords()">기록 초기화</button>
+
+    <div id="records"></div>
+  </div>
+
+  <script>
+    const messageSets = {
+      happy: [
+        "당신의 행복이 오래오래 지속되길 바라요!",
+        "기쁜 일이 생겨서 정말 다행이에요!",
+        "오늘의 웃음이 내일도 이어지길 바랍니다."
+      ],
+      sad: [
+        "슬픈 감정을 나눠줘서 고마워요. 당신의 마음을 이해해요.",
+        "혼자 견디지 않아도 괜찮아요. 곁에 있어줄게요.",
+        "눈물 뒤엔 꼭 무지개가 찾아와요."
+      ],
+      tired: [
+        "많이 피곤했군요. 오늘은 꼭 푹 쉬어요.",
+        "고생 많았어요. 이젠 당신을 위한 시간이 필요해요.",
+        "지친 하루 속에서도 잘 버텨줘서 고마워요."
+      ],
+      anxious: [
+        "불안함을 털어놓는 것만으로도 큰 용기예요.",
+        "모든 게 괜찮아질 거예요. 지금도 잘 하고 있어요.",
+        "당신의 불안함을 함께 안아줄게요."
+      ],
+      angry: [
+        "화난 감정을 참고 말해줘서 고마워요.",
+        "분노를 표현하는 것도 중요한 일이에요.",
+        "당신의 감정은 정당하고 소중해요."
+      ],
+      other: [
+        "당신의 감정을 공유해줘서 정말 고마워요.",
+        "말로 설명하기 힘든 감정도 충분히 중요해요.",
+        "지금 느낀 감정을 인정하는 것부터가 시작이에요."
+      ]
+    };
+
+    const emotionLabels = {
+      happy: "😊 기쁨",
+      sad: "😢 슬픔",
+      tired: "🥱 피곤",
+      anxious: "😰 불안",
+      angry: "😡 화남",
+      other: "✏️ 기타"
+    };
+
+    function saveEmotion() {
+      const emotion = document.getElementById("emotion-select").value;
+      const text = document.getElementById("emotion-text").value.trim();
+      if (!emotion || !text) {
+        alert("감정과 내용을 모두 입력해주세요!");
+        return;
+      }
+
+      const now = new Date();
+      const date = `${now.getFullYear()}년 ${now.getMonth() + 1}월 ${now.getDate()}일`;
+
+      const messages = messageSets[emotion] || ["오늘 하루도 수고 많았어요."];
+      const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+
+      const display = `${date} - ${emotionLabels[emotion] || emotion}\n${text}\n👉 ${randomMessage}`;
+
+      const div = document.createElement("div");
+      div.className = "record-item";
+      div.innerText = display;
+      document.getElementById("records").appendChild(div);
+
+      const prev = JSON.parse(localStorage.getItem("emotionRecords") || "[]");
+      prev.push(display);
+      localStorage.setItem("emotionRecords", JSON.stringify(prev));
+
+      document.getElementById("emotion-text").value = "";
+    }
+
+    function loadRecords() {
+      const saved = JSON.parse(localStorage.getItem("emotionRecords") || "[]");
+      const recordBox = document.getElementById("records");
+      saved.forEach(record => {
+        const div = document.createElement("div");
+        div.className = "record-item";
+        div.innerText = record;
+        recordBox.appendChild(div);
+      });
+    }
+
+    function clearRecords() {
+      if (confirm("모든 감정 기록을 삭제하시겠어요?")) {
+        localStorage.removeItem("emotionRecords");
+        document.getElementById("records").innerHTML = "";
+      }
+    }
+
+    window.onload = loadRecords;
+  </script>
+
+</body>
+</html>
